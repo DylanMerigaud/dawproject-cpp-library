@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set(DAWPROJECT_USE_SYSTEM_PUGIXML @DAWPROJECT_USE_SYSTEM_PUGIXML@)
+if(DAWPROJECT_USE_SYSTEM_PUGIXML)
+  find_dependency(pugixml CONFIG)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/dawprojectTargets.cmake")
+
+check_required_components(dawproject)

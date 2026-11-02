@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu-gcc
+            os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+          - name: ubuntu-clang
+            os: ubuntu-latest
+            cc: clang
+            cxx: clang++
+          - name: macos
+            os: macos-latest
+          - name: windows-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lxml for the XSD validation test
+        run: python -m pip install lxml
+
+      - name: Configure
+        shell: bash
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DDAWPROJECT_WARNINGS_AS_ERRORS=ON
+          -DPython3_ROOT_DIR="${pythonLocation}"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      - name: XSD validation must have run
+        shell: bash
+        run: |
+          ctest --test-dir build --build-config Release -R xsd_validate --output-on-failure -V \
+            | tee xsd.log
+          grep -q "validated" xsd.log
+
+      - name: Install and build a find_package consumer
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cmake --install build --prefix "$RUNNER_TEMP/prefix"
+          mkdir -p "$RUNNER_TEMP/consumer"
+          cat > "$RUNNER_TEMP/consumer/CMakeLists.txt" <<'EOF'
+          cmake_minimum_required(VERSION 3.16)
+          project(consumer LANGUAGES CXX)
+          find_package(dawproject CONFIG REQUIRED)
+          add_executable(app main.cpp)
+          target_link_libraries(app PRIVATE dawproject::dawproject)
+          EOF
+          cat > "$RUNNER_TEMP/consumer/main.cpp" <<'EOF'
+          #include <dawproject/dawproject.hpp>
+          #include <filesystem>
+          int main() {
+            dawproject::Project project;
+            project.application = {"consumer", "1.0"};
+            const auto file = std::filesystem::temp_directory_path() / "consumer.dawproject";
+            dawproject::save(file, project);
+            const auto document = dawproject::load(file);
+            std::filesystem::remove(file);
+            return document.project.application.name == "consumer" ? 0 : 1;
+          }
+          EOF
+          cmake -S "$RUNNER_TEMP/consumer" -B "$RUNNER_TEMP/consumer/build" \
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/prefix"
+          cmake --build "$RUNNER_TEMP/consumer/build"
+          "$RUNNER_TEMP/consumer/build/app"
+
+      - name: Build an add_subdirectory consumer
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/subdir"
+          cp "$RUNNER_TEMP/consumer/main.cpp" "$RUNNER_TEMP/subdir/main.cpp"
+          cat > "$RUNNER_TEMP/subdir/CMakeLists.txt" <<EOF
+          cmake_minimum_required(VERSION 3.16)
+          project(subdir_consumer LANGUAGES CXX)
+          add_subdirectory("$GITHUB_WORKSPACE" dawproject)
+          add_executable(app main.cpp)
+          target_link_libraries(app PRIVATE dawproject::dawproject)
+          EOF
+          cmake -S "$RUNNER_TEMP/subdir" -B "$RUNNER_TEMP/subdir/build"
+          cmake --build "$RUNNER_TEMP/subdir/build" --parallel 2
+          "$RUNNER_TEMP/subdir/build/app"
+
+      - name: Build a FetchContent consumer
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/fetch"
+          cp "$RUNNER_TEMP/consumer/main.cpp" "$RUNNER_TEMP/fetch/main.cpp"
+          cat > "$RUNNER_TEMP/fetch/CMakeLists.txt" <<EOF
+          cmake_minimum_required(VERSION 3.16)
+          project(fetch_consumer LANGUAGES CXX)
+          include(FetchContent)
+          FetchContent_Declare(dawproject SOURCE_DIR "$GITHUB_WORKSPACE")
+          FetchContent_MakeAvailable(dawproject)
+          add_executable(app main.cpp)
+          target_link_libraries(app PRIVATE dawproject::dawproject)
+          EOF
+          cmake -S "$RUNNER_TEMP/fetch" -B "$RUNNER_TEMP/fetch/build"
+          cmake --build "$RUNNER_TEMP/fetch/build" --parallel 2
+          "$RUNNER_TEMP/fetch/build/app"
+
+  variants:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu-cxx20
+            options: -DCMAKE_CXX_STANDARD=20
+          - name: ubuntu-shared
+            options: -DBUILD_SHARED_LIBS=ON
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lxml for the XSD validation test
+        run: python -m pip install lxml
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DDAWPROJECT_WARNINGS_AS_ERRORS=ON
+          -DPython3_ROOT_DIR="${pythonLocation}"
+          ${{ matrix.options }}
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: No unprefixed miniz symbol and only the public API exported
+        run: |
+          if [ -f build/libdawproject.a ]; then lib=build/libdawproject.a; else lib=build/libdawproject.so; fi
+          if nm -g --defined-only "$lib" | grep -E ' (mz_|tdefl_|tinfl_)'; then
+            echo "unprefixed miniz symbols in $lib"
+            exit 1
+          fi
+          if [ "$lib" = build/libdawproject.so ] && nm -D --defined-only "$lib" | grep -E 'dawproject_(mz|tdefl|tinfl|pugi)'; then
+            echo "internal symbols exported from $lib"
+            exit 1
+          fi
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: |
+          clang-format --version
+          clang-format --dry-run --Werror \
+            include/dawproject/*.hpp src/*.cpp src/*.hpp tests/*.cpp tests/*.hpp examples/*.cpp

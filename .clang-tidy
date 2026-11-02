@@ -1,0 +1,25 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  cert-err58-cpp,
+  clang-analyzer-*,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  misc-const-correctness,
+  misc-unused-parameters,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
+  performance-*,
+  readability-const-return-type,
+  readability-container-size-empty,
+  readability-make-member-function-const,
+  readability-redundant-*,
+WarningsAsErrors: ''
+HeaderFilterRegex: 'include/dawproject/.*'
+FormatStyle: file
+...

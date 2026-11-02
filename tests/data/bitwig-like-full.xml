@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project version="1.0">
+  <Application name="Bitwig Studio" version="5.0.4"/>
+  <Transport>
+    <Tempo max="666.000000" min="20.000000" unit="bpm" value="124.000000" id="id0" name="Tempo"/>
+    <TimeSignature denominator="4" numerator="4" id="id1"/>
+  </Transport>
+  <Structure>
+    <Track contentType="notes" loaded="true" id="id2" name="Bass" color="#a2eabf">
+      <Channel audioChannels="2" destination="id20" role="regular" solo="false" id="id3">
+        <Devices>
+          <ClapPlugin deviceID="com.u-he.Diva" deviceName="Diva" deviceRole="instrument" deviceVendor="u-he" loaded="true" pluginVersion="1.4.7" id="id4" name="Diva">
+            <Parameters>
+              <RealParameter max="1.000000" min="0.000000" unit="normalized" value="0.250000" parameterID="12" id="id5" name="Cutoff"/>
+              <EnumParameter count="3" labels="Saw Square Triangle" value="0" parameterID="13" id="id6" name="Shape"/>
+            </Parameters>
+            <Enabled value="true" id="id7" name="On/Off"/>
+            <State path="plugins/7c2a4f1e-diva.clap-preset"/>
+          </ClapPlugin>
+          <Equalizer deviceName="EQ+" deviceRole="audioFX" loaded="true" id="id8" name="EQ+">
+            <Enabled value="true" id="id9" name="On/Off"/>
+            <Band type="highPass" order="2">
+              <Freq max="20000.000000" min="20.000000" unit="hertz" value="40.000000" id="id10" name="Freq"/>
+              <Q max="10.000000" min="0.100000" unit="linear" value="0.707000" id="id11" name="Q"/>
+              <Enabled value="true" id="id12" name="Enabled"/>
+            </Band>
+            <Band type="bell">
+              <Freq max="20000.000000" min="20.000000" unit="hertz" value="800.000000" id="id13" name="Freq"/>
+              <Gain max="24.000000" min="-24.000000" unit="decibel" value="-3.500000" id="id14" name="Gain"/>
+              <Q max="10.000000" min="0.100000" unit="linear" value="1.200000" id="id15" name="Q"/>
+            </Band>
+            <OutputGain max="24.000000" min="-inf" unit="decibel" value="0.000000" id="id16" name="Output Gain"/>
+          </Equalizer>
+        </Devices>
+        <Mute value="false" id="id17" name="Mute"/>
+        <Pan max="1.000000" min="0.000000" unit="normalized" value="0.500000" id="id18" name="Pan"/>
+        <Sends>
+          <Send destination="id23" type="post" id="id19" name="Reverb">
+            <Volume max="1.000000" min="0.000000" unit="linear" value="0.200000" id="id25" name="Volume"/>
+          </Send>
+        </Sends>
+        <Volume max="2.000000" min="0.000000" unit="linear" value="0.659140" id="id26" name="Volume"/>
+      </Channel>
+    </Track>
+    <Track contentType="audio" loaded="true" id="id27" name="Drums" color="#d92e24">
+      <Channel audioChannels="2" destination="id20" role="regular" solo="false" id="id28">
+        <Mute value="true" id="id29" name="Mute"/>
+        <Volume max="2.000000" min="0.000000" unit="linear" value="1.000000" id="id30" name="Volume"/>
+      </Channel>
+    </Track>
+    <Track contentType="audio notes" loaded="true" id="id21" name="FX" color="#5761c6">
+      <Channel audioChannels="2" destination="id20" role="effect" id="id23">
+        <Volume max="2.000000" min="0.000000" unit="linear" value="1.000000" id="id24" name="Volume"/>
+      </Channel>
+    </Track>
+    <Track contentType="audio notes" loaded="true" id="id31" name="Master">
+      <Channel audioChannels="2" role="master" solo="false" id="id20">
+        <Devices>
+          <Vst3Plugin deviceID="5653544D4C5049706F6C796D6F726669" deviceName="Pro-L 2" deviceRole="audioFX" deviceVendor="FabFilter" loaded="true" id="id32" name="Pro-L 2">
+            <State path="plugins/fd0d2a4b-prol2.vstpreset"/>
+          </Vst3Plugin>
+        </Devices>
+        <Volume max="2.000000" min="0.000000" unit="linear" value="1.000000" id="id33" name="Volume"/>
+      </Channel>
+    </Track>
+  </Structure>
+  <Arrangement id="id34">
+    <Lanes timeUnit="beats" id="id35">
+      <Lanes track="id2" id="id36">
+        <Clips id="id37">
+          <Clip time="0.000000" duration="16.000000" playStart="0.000000" loopStart="0.000000" loopEnd="4.000000" enable="true" name="Bassline" color="#a2eabf">
+            <Notes id="id38">
+              <Note time="0.000000" duration="0.500000" channel="0" key="36" vel="0.787402" rel="0.787402"/>
+              <Note time="1.000000" duration="0.500000" channel="0" key="36" vel="0.787402" rel="0.787402"/>
+              <Note time="2.000000" duration="0.250000" channel="0" key="43" vel="0.629921" rel="0.787402">
+                <Lanes>
+                  <Points>
+                    <Target expression="transpose" channel="0" key="43"/>
+                    <RealPoint time="0.000000" value="0.000000" interpolation="linear"/>
+                    <RealPoint time="0.250000" value="2.000000" interpolation="linear"/>
+                  </Points>
+                </Lanes>
+              </Note>
+            </Notes>
+          </Clip>
+        </Clips>
+        <Points id="id39">
+          <Target parameter="id5"/>
+          <RealPoint time="0.000000" value="0.100000" interpolation="linear"/>
+          <RealPoint time="16.000000" value="0.900000" interpolation="hold"/>
+        </Points>
+      </Lanes>
+      <Lanes track="id27" id="id40">
+        <Clips id="id41">
+          <Clip time="0.000000" duration="16.000000" playStart="0.000000" fadeTimeUnit="beats" fadeInTime="0.000000" fadeOutTime="0.125000" name="Drum Loop">
+            <Clips id="id42">
+              <Clip time="0.000000" duration="16.000000" contentTimeUnit="beats" playStart="0.000000">
+                <Warps contentTimeUnit="seconds" timeUnit="beats" id="id43">
+                  <Audio algorithm="stretch" channels="2" duration="7.741497" sampleRate="44100" timeUnit="seconds" id="id44">
+                    <File path="audio/drum-loop.wav"/>
+                  </Audio>
+                  <Warp time="0.000000" contentTime="0.000000"/>
+                  <Warp time="16.000000" contentTime="7.741497"/>
+                </Warps>
+              </Clip>
+            </Clips>
+          </Clip>
+        </Clips>
+      </Lanes>
+    </Lanes>
+    <Markers id="id45">
+      <Marker time="0.000000" name="Intro" color="#ffffff"/>
+      <Marker time="32.000000" name="Drop"/>
+    </Markers>
+    <TempoAutomation unit="bpm" id="id46">
+      <Target parameter="id0"/>
+      <RealPoint time="0.000000" value="124.000000" interpolation="linear"/>
+      <RealPoint time="64.000000" value="128.000000" interpolation="linear"/>
+    </TempoAutomation>
+  </Arrangement>
+  <Scenes>
+    <Scene id="id47" name="Scene 1">
+      <Lanes id="id48">
+        <ClipSlot track="id2" hasStop="true" id="id49">
+          <Clip time="0.000000" duration="4.000000" reference="id38" name="Bassline Alias"/>
+        </ClipSlot>
+        <ClipSlot track="id27" hasStop="false" id="id50"/>
+      </Lanes>
+    </Scene>
+  </Scenes>
+</Project>
