@@ -1,0 +1,46 @@
+name: contract
+
+# Bitwig's DAWproject schema on its main branch, every week: the vendored copy in spec/ must
+# still match it, and every document the library writes must validate against it. A schema
+# change upstream turns this workflow red the week it lands.
+on:
+  schedule:
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upstream-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install lxml
+        run: python -m pip install lxml
+
+      - name: Fetch the schema from bitwig/dawproject main
+        run: |
+          mkdir -p upstream
+          for f in Project.xsd MetaData.xsd; do
+            curl -fsSL -o "upstream/$f" "https://raw.githubusercontent.com/bitwig/dawproject/main/$f"
+          done
+
+      - name: Build and test
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR="${pythonLocation}"
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure
+
+      - name: Every written document validates against the upstream schema
+        run: python tests/xsd_validate.py build/xsd-out upstream
+
+      - name: The vendored schema matches upstream
+        run: |
+          diff -u spec/Project.xsd upstream/Project.xsd
+          diff -u spec/MetaData.xsd upstream/MetaData.xsd
