@@ -57,6 +57,9 @@ TEST_SUITE("numbers") {
     CHECK(std::signbit(parsed("-1e-400")));
     CHECK(parsed("0." + std::string(400, '0') + "1") == 0.0);
     CHECK(parsed("4.9406564584124654e-324") > 0.0);
+    CHECK(parsed("4.9406564584124654e-324") == std::numeric_limits<double>::denorm_min());
+    CHECK(parsed("2.2250738585072009e-308") > 0.0);
+    CHECK(parsed("-5e-324") == -std::numeric_limits<double>::denorm_min());
     double value = 0.0;
     CHECK_FALSE(parseDouble("1e", value));
     CHECK_FALSE(parseDouble("1e400x", value));

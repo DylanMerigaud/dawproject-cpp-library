@@ -3,6 +3,7 @@
 #include "numbers.hpp"
 
 #include <charconv>
+#include <clocale>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -112,7 +113,20 @@ bool saturate(std::string_view text, double& out) noexcept {
     return true;
   }
   magnitude = (digitsBeforePoint > 0 ? digitsBeforePoint - 1 : -(zerosAfterPoint + 1)) + exponent;
-  out = magnitude > 0 ? std::numeric_limits<double>::infinity() : 0.0;
+  if (magnitude > 0) {
+    out = std::numeric_limits<double>::infinity();
+    return true;
+  }
+  // Underflow: from_chars reports out_of_range for subnormals on some libraries (libc++ on
+  // macOS), but the value is representable. strtod gives the subnormal, or zero below it.
+  // The text is only digits, '.', 'e', sign here; swap '.' for the current locale's separator.
+  std::string local(text);
+  const char point = *std::localeconv()->decimal_point;
+  const std::size_t dot = local.find('.');
+  if (dot != std::string::npos) {
+    local[dot] = point;
+  }
+  out = std::strtod(local.c_str(), nullptr);
   return true;
 }
 
